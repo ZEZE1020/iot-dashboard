@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WIFITEL — Telematics Dashboard</title>
+  <link rel="stylesheet" href="/css/dashboard.css" />
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav class="navbar">
+    <div class="brand">
+      <span class="brand-icon">◈</span>
+      <span class="brand-name">Numeral IoT</span>
+      <span class="brand-sub">Telematics Dashboard</span>
+    </div>
+    <div class="nav-right">
+      <div class="mqtt-status">
+        <span class="status-dot" id="statusDot"></span>
+        <span id="statusText">Connecting…</span>
+      </div>
+      <div class="clock" id="clock"></div>
+    </div>
+  </nav>
+
+  <!-- SUMMARY STATS -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-value" id="statTotal">0</div>
+      <div class="stat-label">Total Devices</div>
+    </div>
+    <div class="stat-card accent">
+      <div class="stat-value" id="statOnline">0</div>
+      <div class="stat-label">Online</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="statRfidToday">0</div>
+      <div class="stat-label">RFID Scans</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="statAvgBattery">—</div>
+      <div class="stat-label">Avg Battery</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="statAlerts">0</div>
+      <div class="stat-label">Active Alerts</div>
+    </div>
+  </div>
+
+  <section class="section">
+    <div class="section-header">
+      <h2>Visual Fleet Overview</h2>
+    </div>
+    <div class="overview-grid">
+      <div class="overview-card">
+        <div class="overview-title">Battery Distribution</div>
+        <div class="overview-canvas-wrap">
+          <canvas id="fleetBatteryChart"></canvas>
+        </div>
+      </div>
+
+      <div class="overview-card">
+        <div class="overview-title">Signal Distribution</div>
+        <div class="overview-canvas-wrap">
+          <canvas id="fleetSignalChart"></canvas>
+        </div>
+      </div>
+
+      <div class="overview-card wide">
+        <div class="overview-title">Fleet Health Bars</div>
+        <div class="health-rows">
+          <div class="health-row">
+            <span class="health-label">Online Ratio</span>
+            <span class="health-value" id="healthOnlineValue">0%</span>
+            <div class="health-track"><div class="health-fill online" id="healthOnlineBar"></div></div>
+          </div>
+          <div class="health-row">
+            <span class="health-label">Avg Battery</span>
+            <span class="health-value" id="healthBatteryValue">0%</span>
+            <div class="health-track"><div class="health-fill battery" id="healthBatteryBar"></div></div>
+          </div>
+          <div class="health-row">
+            <span class="health-label">Alert Pressure</span>
+            <span class="health-value" id="healthAlertValue">0%</span>
+            <div class="health-track"><div class="health-fill alert" id="healthAlertBar"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="overview-card full">
+        <div class="overview-title">Message Throughput (Last 15 min)</div>
+        <div class="overview-canvas-wrap throughput">
+          <canvas id="throughputChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-header">
+      <h2>Fleet Matrix</h2>
+      <span class="badge" id="matrixCount">0</span>
+    </div>
+    <div class="table-wrap">
+      <table class="data-table compact-table">
+        <thead>
+          <tr>
+            <th>Device</th>
+            <th>Status</th>
+            <th>Last Seen</th>
+            <th>Battery</th>
+            <th>Signal</th>
+            <th>Ignition</th>
+            <th>Speed</th>
+            <th>Sat</th>
+            <th>WiFi</th>
+            <th>Alerts</th>
+          </tr>
+        </thead>
+        <tbody id="fleetMatrixBody">
+          <tr><td colspan="10" class="empty-row">No devices yet</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-header">
+      <h2>Exports</h2>
+    </div>
+    <div class="export-grid">
+      <a class="export-btn" href="/api/export/heartbeat?format=json" target="_blank" rel="noopener">Heartbeat JSON</a>
+      <a class="export-btn" href="/api/export/heartbeat?format=csv" target="_blank" rel="noopener">Heartbeat CSV</a>
+      <a class="export-btn" href="/api/export/wifi?format=json" target="_blank" rel="noopener">WiFi JSON</a>
+      <a class="export-btn" href="/api/export/wifi?format=csv" target="_blank" rel="noopener">WiFi CSV</a>
+      <a class="export-btn" href="/api/export/rfid?format=json" target="_blank" rel="noopener">RFID JSON</a>
+      <a class="export-btn" href="/api/export/rfid?format=csv" target="_blank" rel="noopener">RFID CSV</a>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-header">
+      <h2>Alerts</h2>
+      <span class="badge" id="alertCount">0</span>
+    </div>
+    <div id="alertsList" class="alerts-list">
+      <div class="placeholder">No active alerts</div>
+    </div>
+  </section>
+
+  <!-- DEVICES -->
+  <section class="section">
+    <div class="section-header">
+      <h2>Devices</h2>
+      <span class="badge" id="deviceCount">0</span>
+    </div>
+    <div class="devices-grid" id="devicesGrid">
+      <div class="placeholder">Waiting for device data…</div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-header">
+      <h2>Raw MQTT Monitor</h2>
+      <span class="badge" id="rawCount">0</span>
+    </div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Topic</th>
+            <th>Type</th>
+            <th>Device</th>
+            <th>Payload</th>
+          </tr>
+        </thead>
+        <tbody id="rawTableBody">
+          <tr><td colspan="5" class="empty-row">No raw MQTT messages yet</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- RFID SCANS -->
+  <section class="section">
+    <div class="section-header">
+      <h2>Recent RFID Scans</h2>
+      <span class="badge" id="rfidCount">0</span>
+    </div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Device</th>
+            <th>Tag ID</th>
+            <th>Reader</th>
+            <th>Location</th>
+          </tr>
+        </thead>
+        <tbody id="rfidTableBody">
+          <tr><td colspan="5" class="empty-row">No scans yet</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script src="/js/dashboard.js"></script>
+</body>
+</html>
