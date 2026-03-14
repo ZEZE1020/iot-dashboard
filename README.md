@@ -2,7 +2,7 @@
 
 A real-time IoT monitoring dashboard for MQTT brokers. Connect any MQTT broker and monitor devices with live alerts, historical data export, and an intuitive web interface.
 
-### [Demo](Screen Recording 2026-03-13 235303.gif)
+![Demo](<Screen Recording 2026-03-13 235303.gif>)
 
 ## Features
 
